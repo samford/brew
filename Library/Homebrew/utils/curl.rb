@@ -160,6 +160,8 @@ module Utils
 
     # Check if a URL is protected by CloudFlare (e.g. badlion.net and jaxx.io).
     def url_protected_by_cloudflare?(details)
+      return false unless details[:headers]
+
       [403, 503].include?(details[:status].to_i) &&
         details[:headers].match?(/^Set-Cookie: __cfduid=/i) &&
         details[:headers].match?(/^Server: cloudflare/i)
@@ -167,6 +169,8 @@ module Utils
 
     # Check if a URL is protected by Incapsula (e.g. corsair.com).
     def url_protected_by_incapsula?(details)
+      return false unless details[:headers]
+
       details[:status].to_i == 403 &&
         details[:headers].match?(/^Set-Cookie: visid_incap_/i) &&
         details[:headers].match?(/^Set-Cookie: incap_ses_/i)
@@ -217,7 +221,7 @@ module Utils
       end
 
       if url.start_with?("https://") && Homebrew::EnvConfig.no_insecure_redirect? &&
-         !details[:final_url].start_with?("https://")
+         !details[:final_url]&.start_with?("https://")
         return "The #{url_type} #{url} redirects back to HTTP"
       end
 
@@ -233,7 +237,7 @@ module Utils
       file_match = details[:file_hash] == secure_details[:file_hash]
 
       if (etag_match || content_length_match || file_match) &&
-         secure_details[:final_url].start_with?("https://") &&
+         secure_details[:final_url]&.start_with?("https://") &&
          url.start_with?("http://")
         return "The #{url_type} #{url} should use HTTPS rather than HTTP"
       end
@@ -246,7 +250,7 @@ module Utils
 
       # Check for the same content after removing all protocols
       if (http_content && https_content) && (http_content == https_content) &&
-         url.start_with?("http://") && secure_details[:final_url].start_with?("https://")
+         url.start_with?("http://") && secure_details[:final_url]&.start_with?("https://")
         return "The #{url_type} #{url} should use HTTPS rather than HTTP"
       end
 
@@ -275,30 +279,31 @@ module Utils
         user_agent: user_agent
       )
 
-      status_code = :unknown
-      while status_code == :unknown || status_code.to_s.start_with?("3")
-        headers, _, output = output.partition("\r\n\r\n")
-        status_code = headers[%r{HTTP/.* (\d+)}, 1]
-        location = headers[/^Location:\s*(.*)$/i, 1]
-        final_url = location.chomp if location
-      end
-
       if status.success?
+        parsed_output = parse_curl_output(output)
+        heads = parsed_output[:heads]
+        if heads.present?
+          status_code = curl_response_status_code(heads)
+          final_url = curl_response_last_location(heads)
+
+          headers = heads.last[:headers]
+          etag = headers["etag"][%r{^([wW]/)?"(([^"]|\\")*)"}, 2] if headers["etag"]
+          content_length = headers["content-length"]
+        end
+
         file_contents = File.read(file.path)
         file_hash = Digest::SHA2.hexdigest(file_contents) if hash_needed
       end
 
-      final_url ||= url
-
       {
         url:            url,
         final_url:      final_url,
-        status:         status_code,
-        etag:           headers[%r{ETag: ([wW]/)?"(([^"]|\\")*)"}, 2],
-        content_length: headers[/Content-Length: (\d+)/, 1],
         headers:        headers,
-        file_hash:      file_hash,
+        status:         status_code,
+        etag:           etag,
+        content_length: content_length,
         file:           file_contents,
+        file_hash:      file_hash,
       }
     ensure
       file.unlink
