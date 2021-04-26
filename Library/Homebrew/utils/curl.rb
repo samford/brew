@@ -307,6 +307,85 @@ module Utils
     def http_status_ok?(status)
       (100..299).cover?(status.to_i)
     end
+
+    # Separates the output text from `curl` into an array of response heads and
+    # the final response body.
+    # @param output [String] The output text from `curl` containing
+    #   response head(s), body, or both.
+    # @return [Hash] A hash containing an array of the response heads and the
+    #   body output, if found.
+    def parse_curl_output(output)
+      heads = []
+      return { heads: heads, body: "" } unless output.is_a?(String)
+
+      output = output.lstrip
+      while output.match?(%r{\AHTTP/[\d.]+ \d+})
+        head_text, _, output = output.partition("\r\n\r\n")
+        output = output.lstrip
+        next if head_text.blank?
+
+        head_text.chomp!
+        head = parse_curl_head(head_text)
+        heads << head if head.present?
+      end
+
+      { heads: heads, body: output }
+    end
+
+    # Parses a `curl` response head into a hash containing the status
+    # information and headers.
+    # @param head_text [String] The head text of a `curl` response.
+    # @return [Hash] A hash containing the status information and headers
+    #   (as a hash with header names as keys).
+    def parse_curl_head(head_text)
+      head = {}
+      return head if !head_text.is_a?(String) || !head_text.match?(%r{^HTTP/.* (?<code>\d+)(?: (?<desc>[^\r\n]+))?})
+
+      # Parse and remove the status line
+      match = head_text.match(%r{^HTTP/.* (?<code>\d+)(?: (?<desc>[^\r\n]+))?})
+      head[:status_code] = match["code"] if match["code"]
+      head[:status_desc] = match["desc"] if match["desc"]
+      head_text = head_text.sub(%r{^HTTP/.* (\d+).*$\s*}, "")
+
+      # Create a hash from the headers
+      head[:headers] = head_text.split("\r\n")
+                                .map { |header| header.split(/:\s*/, 2) }
+                                .to_h.transform_keys(&:downcase)
+
+      head
+    end
+
+    # Returns the status code of the last response from cURL output.
+    # @param heads [Array<Hash>] An array of hashes containing response status
+    #   information and headers from `parse_curl_head`.
+    # @return [String, nil] The status code of the last response.
+    def curl_response_status_code(heads)
+      return unless heads.is_a?(Array)
+      return unless heads.last.is_a?(Hash)
+
+      heads.last[:status_code]
+    end
+
+    # Returns the URL from the last location header found in cURL output
+    # response heads.
+    # @param heads [Array<Hash>] An array of hashes containing response status
+    #   information and headers from `parse_curl_head`.
+    # @param url [String, nil] The URL to use as a base for making the
+    #  `location` URL absolute.
+    # @param absolutize [true, false] Whether to make the location URL absolute.
+    # @return [String, nil] The URL from last-occurring `location` header, if
+    #   any, in the responses.
+    def curl_response_last_location(heads, url: nil, absolutize: false)
+      return unless heads.is_a?(Array)
+
+      heads.reverse_each do |head|
+        next if !head[:headers] || !(location = head[:headers]["location"])
+
+        return (absolutize && url.is_a?(String)) ? URI.join(url, location).to_s : location
+      end
+
+      nil
+    end
   end
 end
 
