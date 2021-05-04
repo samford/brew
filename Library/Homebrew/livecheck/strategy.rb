@@ -96,23 +96,18 @@ module Homebrew
             "--max-time", "10"        # Max time allowed for transfer (secs)
           ]
 
-          stdout, _, status = curl_with_workarounds(
+          output, _, status = curl_with_workarounds(
             *args, url,
             print_stdout: false, print_stderr: false,
             debug: false, verbose: false,
             user_agent: user_agent, timeout: 20,
             retry: false
           )
+          next unless status.success?
 
-          while stdout.match?(/\AHTTP.*\r$/)
-            h, stdout = stdout.split("\r\n\r\n", 2)
-
-            headers << h.split("\r\n").drop(1)
-                        .map { |header| header.split(/:\s*/, 2) }
-                        .to_h.transform_keys(&:downcase)
-          end
-
-          return headers if status.success?
+          parsed_output = parse_curl_output(output)
+          parsed_output[:heads].each { |head| headers << head[:headers] }
+          return headers if headers.present?
         end
 
         headers
@@ -161,26 +156,10 @@ module Homebrew
 
         # Separate the head(s)/body and identify the final URL (after any
         # redirections)
-        max_iterations = 5
-        iterations = 0
-        output = output.lstrip
-        while output.match?(%r{\AHTTP/[\d.]+ \d+}) && output.include?("\r\n\r\n")
-          iterations += 1
-          raise "Too many redirects (max = #{max_iterations})" if iterations > max_iterations
+        parsed_output = parse_curl_output(output)
+        final_url = curl_response_last_location(parsed_output[:heads])
 
-          head_text, _, output = output.partition("\r\n\r\n")
-          output = output.lstrip
-
-          location = head_text[/^Location:\s*(.*)$/i, 1]
-          next if location.blank?
-
-          location.chomp!
-          # Convert a relative redirect URL to an absolute URL
-          location = URI.join(url, location) unless location.match?(PageMatch::URL_MATCH_REGEX)
-          final_url = location
-        end
-
-        data = { content: output }
+        data = { content: parsed_output[:body] }
         data[:final_url] = final_url if final_url.present? && final_url != original_url
         data
       end
