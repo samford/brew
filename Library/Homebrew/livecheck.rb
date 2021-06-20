@@ -18,11 +18,29 @@ class Livecheck
 
   def initialize(formula_or_cask)
     @formula_or_cask = formula_or_cask
+    @current_version = nil
     @regex = nil
     @skip = false
     @skip_msg = nil
     @strategy = nil
     @url = nil
+  end
+
+  # Sets the `@current_version` instance variable to the provided `String` or
+  # returns the `@current_version` instance variable when no argument is
+  # provided.
+  #
+  # @param val [String] regex to use for matching versions in content
+  # @return [String, nil]
+  def current_version(val = nil)
+    case val
+    when nil
+      @current_version
+    when String
+      @current_version = val
+    else
+      raise TypeError, "Livecheck#current_version expects a String"
+    end
   end
 
   # Sets the `@regex` instance variable to the provided `Regexp` or returns the
