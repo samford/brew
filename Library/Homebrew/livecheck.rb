@@ -24,6 +24,7 @@ class Livecheck
     @package_or_resource = package_or_resource
     @referenced_cask_name = nil
     @referenced_formula_name = nil
+    @current_version = nil
     @regex = nil
     @skip = false
     @skip_msg = nil
@@ -68,6 +69,23 @@ class Livecheck
       @referenced_formula_name
     when String
       @referenced_formula_name = formula_name
+    end
+  end
+
+  # Sets the `@current_version` instance variable to the provided `String` or
+  # returns the `@current_version` instance variable when no argument is
+  # provided.
+  #
+  # @param val [String] regex to use for matching versions in content
+  # @return [String, nil]
+  def current_version(val = nil)
+    case val
+    when nil
+      @current_version
+    when String
+      @current_version = val
+    else
+      raise TypeError, "Livecheck#current_version expects a String"
     end
   end
 

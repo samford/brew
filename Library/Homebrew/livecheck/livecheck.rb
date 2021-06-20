@@ -223,6 +223,7 @@ module Homebrew
       formulae_checked = formulae_and_casks_to_check.map.with_index do |formula_or_cask, i|
         formula = formula_or_cask if formula_or_cask.is_a?(Formula)
         cask = formula_or_cask if formula_or_cask.is_a?(Cask::Cask)
+        formula_or_cask_livecheck = formula_or_cask.livecheck
 
         use_full_name = full_name || ambiguous_names.include?(formula_or_cask)
         name = package_or_resource_name(formula_or_cask, full_name: use_full_name)
@@ -270,7 +271,10 @@ module Homebrew
         # head-only formulae. A formula with `stable` and `head` that's
         # installed using `--head` will still use the `stable` version for
         # comparison.
-        current = if formula
+        livecheck_current_version = formula_or_cask_livecheck.current_version
+        current = if livecheck_current_version
+          Version.new(livecheck_current_version)
+        elsif formula
           if formula.head_only?
             formula.any_installed_version.version.commit
           else
