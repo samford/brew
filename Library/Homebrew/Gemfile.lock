@@ -1,7 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (6.1.4.3)
+    activesupport (6.1.4.4)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
@@ -195,7 +195,7 @@ GEM
     yard-sorbet (0.6.1)
       sorbet-runtime (>= 0.5)
       yard (>= 0.9)
-    zeitwerk (2.5.2)
+    zeitwerk (2.5.3)
 
 PLATFORMS
   ruby
