@@ -68,12 +68,12 @@ GEM
     parallel (1.21.0)
     parallel_tests (3.7.3)
       parallel
-    parlour (6.0.1)
+    parlour (7.0.0)
       commander (~> 4.5)
       parser
       rainbow (~> 3.0)
       sorbet-runtime (>= 0.5)
-    parser (3.1.0.0)
+    parser (3.1.2.0)
       ast (~> 2.4.1)
     patchelf (1.3.0)
       elftools (>= 1.1.3)
