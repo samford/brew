@@ -181,17 +181,17 @@ module Homebrew
       # collected into an array of hashes.
       #
       # @param url [String] the URL to fetch
-      # @param homebrew_curl [Boolean] whether to use brewed curl with the URL
+      # @param options [Hash] options to control behavior
       # @return [Array]
-      sig { params(url: String, homebrew_curl: T::Boolean).returns(T::Array[T::Hash[String, String]]) }
-      def self.page_headers(url, homebrew_curl: false)
+      sig { params(url: String, options: T::Hash[Symbol, T.untyped]).returns(T::Array[T::Hash[String, String]]) }
+      def self.page_headers(url, options = {})
         headers = []
 
         [:default, :browser].each do |user_agent|
           output, _, status = curl_with_workarounds(
             *PAGE_HEADERS_CURL_ARGS, url,
             **DEFAULT_CURL_OPTIONS,
-            use_homebrew_curl: homebrew_curl,
+            use_homebrew_curl: options[:homebrew_curl] || false,
             user_agent:        user_agent
           )
           next unless status.success?
