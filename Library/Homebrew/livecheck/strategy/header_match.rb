@@ -85,14 +85,22 @@ module Homebrew
         def self.find_versions(url:, regex: nil, homebrew_curl: false, **_unused, &block)
           match_data = { matches: {}, regex: regex, url: url }
 
-          headers = Strategy.page_headers(url, homebrew_curl: homebrew_curl)
+          # NOTE: Some servers won't redirect or respond with a `HEAD` request,
+          # so this will retry using a `GET` request as a temporary workaround.
+          # We will account for this in `livecheck` blocks in the future.
+          opts = { homebrew_curl: homebrew_curl }
+          [opts, opts.merge(curl_args: ["--request", "GET"])].each do |options|
+            headers = Strategy.page_headers(url, options)
 
-          # Merge the headers from all responses into one hash
-          merged_headers = headers.reduce(&:merge)
-          return match_data if merged_headers.blank?
+            # Merge the headers from all responses into one hash
+            merged_headers = headers.reduce(&:merge)
+            next if merged_headers.blank?
 
-          versions_from_headers(merged_headers, regex, &block).each do |version_text|
-            match_data[:matches][version_text] = Version.new(version_text)
+            versions_from_headers(merged_headers, regex, &block).each do |version_text|
+              match_data[:matches][version_text] = Version.new(version_text)
+            end
+
+            break if match_data[:matches].present?
           end
 
           match_data
