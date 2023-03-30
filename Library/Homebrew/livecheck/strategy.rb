@@ -187,12 +187,19 @@ module Homebrew
       def self.page_headers(url, options = {})
         headers = []
 
+        args = if options[:curl_args].is_a?(Array)
+          PAGE_HEADERS_CURL_ARGS + options[:curl_args]
+        else
+          PAGE_HEADERS_CURL_ARGS
+        end
+
         [:default, :browser].each do |user_agent|
           output, _, status = curl_with_workarounds(
-            *PAGE_HEADERS_CURL_ARGS, url,
+            *args,
+            url,
             **DEFAULT_CURL_OPTIONS,
             use_homebrew_curl: options[:homebrew_curl] || false,
-            user_agent:        user_agent
+            user_agent:        user_agent,
           )
           next unless status.success?
 
