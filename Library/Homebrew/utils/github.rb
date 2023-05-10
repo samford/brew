@@ -248,9 +248,25 @@ module GitHub
     API.open_rest(url, request_method: :GET)
   end
 
-  def self.get_latest_release(user, repo)
+  def self.get_latest_release(
+    user,
+    repo,
+    debug: nil,
+    timeout: nil,
+    connect_timeout: nil,
+    max_time: nil,
+    retries: nil
+  )
     url = "#{API_URL}/repos/#{user}/#{repo}/releases/latest"
-    API.open_rest(url, request_method: :GET)
+
+    curl_options = {
+      debug:           debug,
+      timeout:         timeout,
+      connect_timeout: connect_timeout,
+      max_time:        max_time,
+      retries:         retries,
+    }.compact
+    API.open_rest(url, request_method: :GET, **curl_options)
   end
 
   def self.generate_release_notes(user, repo, tag, previous_tag: nil)

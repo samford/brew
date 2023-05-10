@@ -181,7 +181,17 @@ module GitHub
     end
 
     def self.open_rest(
-      url, data: nil, data_binary_path: nil, request_method: nil, scopes: [].freeze, parse_json: true
+      url,
+      data: nil,
+      data_binary_path: nil,
+      request_method: nil,
+      scopes: [].freeze,
+      parse_json: true,
+      debug: nil,
+      timeout: nil,
+      connect_timeout: nil,
+      max_time: nil,
+      retries: nil
     )
       # This is a no-op if the user is opting out of using the GitHub API.
       return block_given? ? yield({}) : {} if Homebrew::EnvConfig.no_github_api?
@@ -222,7 +232,15 @@ module GitHub
 
         args += ["--dump-header", T.must(headers_tmpfile.path)]
 
-        output, errors, status = curl_output("--location", url.to_s, *args, secrets: [token])
+        curl_options = {
+          debug:           debug,
+          timeout:         timeout,
+          connect_timeout: connect_timeout,
+          max_time:        max_time,
+          retries:         retries,
+        }.compact
+
+        output, errors, status = curl_output("--location", url.to_s, *args, secrets: [token], **curl_options)
         output, _, http_code = output.rpartition("\n")
         output, _, http_code = output.rpartition("\n") if http_code == "000"
         headers = headers_tmpfile.read
