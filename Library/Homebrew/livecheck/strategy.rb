@@ -65,10 +65,7 @@ module Homebrew
 
       # Baseline `curl` options used in {Strategy} methods.
       DEFAULT_CURL_OPTIONS = {
-        print_stdout:    false,
-        print_stderr:    false,
         debug:           false,
-        verbose:         false,
         timeout:         CURL_PROCESS_TIMEOUT,
         connect_timeout: CURL_CONNECT_TIMEOUT,
         max_time:        CURL_MAX_TIME,
