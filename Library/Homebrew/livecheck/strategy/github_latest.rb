@@ -141,7 +141,11 @@ module Homebrew
 
           match_data[:url] = generated[:url]
 
-          release = GitHub.get_latest_release(generated[:username], generated[:repository])
+          release = GitHub.get_latest_release(
+            generated[:username],
+            generated[:repository],
+            **Strategy::DEFAULT_CURL_OPTIONS,
+          )
           versions_from_content(release, regex, &block).each do |match_text|
             match_data[:matches][match_text] = Version.new(match_text)
           end
