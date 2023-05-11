@@ -65,10 +65,16 @@ module Homebrew
 
       # Baseline `curl` options used in {Strategy} methods.
       DEFAULT_CURL_OPTIONS = {
+        # By default, `Utils::Curl` methods will print text (e.g. the command)
+        # when `--debug` is set. `debug` is set to `false` to ensure that this
+        # unwanted text doesn't appear in livecheck's debug output.
         debug:           false,
         timeout:         CURL_PROCESS_TIMEOUT,
         connect_timeout: CURL_CONNECT_TIMEOUT,
         max_time:        CURL_MAX_TIME,
+        # `Utils::Curl` uses curl's `--retry` option by default but this isn't
+        # valuable enough in the context of livecheck to justify the additional
+        # effort. A zero value ensures that the `--retry` option is omitted.
         retries:         0,
       }.freeze
 
