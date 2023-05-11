@@ -180,6 +180,21 @@ module GitHub
       EOS
     end
 
+    sig {
+      params(
+        url:              T.any(String, URI::HTTPS),
+        data:             T.nilable(T::Hash[String, T.untyped]),
+        data_binary_path: T.nilable(String),
+        request_method:   T.nilable(Symbol),
+        scopes:           Array,
+        parse_json:       T::Boolean,
+        debug:            T.nilable(T::Boolean),
+        timeout:          T.nilable(T.any(Integer, Float)),
+        connect_timeout:  T.nilable(T.any(Integer, Float)),
+        max_time:         T.nilable(T.any(Integer, Float)),
+        retries:          T.nilable(Integer),
+      ).returns(T.untyped)
+    }
     def self.open_rest(
       url,
       data: nil,
@@ -280,7 +295,7 @@ module GitHub
 
     def self.open_graphql(query, variables: nil, scopes: [].freeze, raise_errors: true)
       data = { query: query, variables: variables }
-      result = open_rest("#{API_URL}/graphql", scopes: scopes, data: data, request_method: "POST")
+      result = open_rest("#{API_URL}/graphql", scopes: scopes, data: data, request_method: :POST)
 
       if raise_errors
         if result["errors"].present?

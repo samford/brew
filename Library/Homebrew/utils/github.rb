@@ -248,6 +248,17 @@ module GitHub
     API.open_rest(url, request_method: :GET)
   end
 
+  sig {
+    params(
+      user:            String,
+      repo:            String,
+      debug:           T.nilable(T::Boolean),
+      timeout:         T.nilable(T.any(Integer, Float)),
+      connect_timeout: T.nilable(T.any(Integer, Float)),
+      max_time:        T.nilable(T.any(Integer, Float)),
+      retries:         T.nilable(Integer),
+    ).returns(T::Hash[String, T.untyped])
+  }
   def self.get_latest_release(
     user,
     repo,
