@@ -249,7 +249,7 @@ GEM
       jekyll-seo-tag (~> 2.1)
     minitest (5.15.0)
     mixlib-cli (2.1.8)
-    mixlib-config (3.0.9)
+    mixlib-config (3.0.27)
       tomlrb
     mixlib-shellout (3.2.5)
       chef-utils
@@ -290,7 +290,7 @@ GEM
     terminal-table (1.8.0)
       unicode-display_width (~> 1.1, >= 1.1.1)
     thread_safe (0.3.6)
-    tomlrb (2.0.1)
+    tomlrb (2.0.3)
     typhoeus (1.4.0)
       ethon (>= 0.9.0)
     tzinfo (1.2.9)
